@@ -25,11 +25,20 @@ public class Player : MonoBehaviour
 
         Vector2 move = new Vector2(horizontal,0);
         transform.Translate(move * Time.deltaTime * movementSpeed, Space.Self);
+
+        if (Input.GetButton("left shift"))
+        {
+            movementSpeed = 10f;
+        }
+        else
+        {
+            movementSpeed = 5f;
+        }
     }
 
     public void FixedUpdate()
     {
-        if (Input.GetButton("Jump") && isGrounded & _rb.velocity.magnitude > 0)
+        if (Input.GetButton("Jump") && isGrounded && _rb.velocity.magnitude > 0)
         {
             if (isGrounded)
             {
