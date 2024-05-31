@@ -1,47 +1,44 @@
 using UnityEngine;
 
+// Klasse voor kogels
 public class Bullet : MonoBehaviour
 {
-    [Header("logical")]
-    public float bulletSpeed = 10f;
-    public string AI = "AI";
-    public Rigidbody2D rb;
-    public Player player;
-    public GameObject bullet;
-    public Rigidbody2D bulletRb;
-    public GameObject[] enemies;
-    
-    
-    // Start is called before the first frame update
-    void Start()
+    public float speed;
+    public float damage;
+    private Vector3 direction;
+
+    public void SetDirection(Vector3 direction)
     {
-        bulletRb = GetComponent<Rigidbody2D>();
-        player = GameObject.Find("Player").GetComponent<Player>();
-        bulletRb.velocity = transform.forward * bulletSpeed;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.forward, 1000);
-        if (Physics2D.Raycast(transform.position, transform.forward, out hit))
-        {
-            Debug.Log("Hit: " + hit.collider.gameObject.name);
-            HandleHit(hit.collider);
-        }
+        // de richting van de kogel (genormaliseerd)
+        this.direction = direction.normalized;
     }
 
-    private void HandleHit(Collider other)
+    // Start is called before the first frame update
+    private void Update()
     {
+        // Richting doorgeven van de kogel berekenen
+        transform.Translate(direction * speed * Time.deltaTime);
+    }
+
+    // Methode die wordt aangeroepen wanneer de kogel een trigger collider raakt
+    private void OnTriggerEnter(Collider other)
+    {
+        // Controleer of de kogel een vijand raakt
         if (other.gameObject.CompareTag("Enemy"))
         {
-            //maak deze hit functieaf nadat je de enemies script heb geschreven met health
-            Debug.Log("Hit enemy");
+            // Pas aan de schade toe aan de vijand
+            Enemy enemy = other.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(damage);
+            }
+            // Vernietig de kogel
+            Destroy(gameObject);
         }
-    }
-
-    public void Initialize(Vector2 direction)
-    {
-        rb.velocity = direction.normalized * bulletSpeed;
-    }
-    // Update is called once per frame
-    void Update()
-    {
-        
+        else if (!other.gameObject.CompareTag("Player"))
+        {
+            // Vernietig de kogel als deze iets anders raakt dan de speler
+            Destroy(gameObject);
+        }
     }
 }
