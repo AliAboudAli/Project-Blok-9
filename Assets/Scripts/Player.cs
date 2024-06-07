@@ -1,29 +1,30 @@
 using UnityEngine;
+using UnityEngine.XR;
 using Vector2 = UnityEngine.Vector2;
 
 public class Player : MonoBehaviour
 {
-    [Header("Movement")] 
-    [Range(0f, 100f)]public float movementSpeed;
-    [Range(0f, 100f)]public float jumpForce = 1f;
-    [Range(0f, 100f)]public float maxJump = 10f;
+    [Header("Movement")] [Range(0f, 100f)] public float movementSpeed;
+    [Range(0f, 100f)] public float jumpForce = 1f;
+    [Range(0f, 100f)] public float maxJump = 10f;
     public bool isGrounded;
     private Rigidbody2D _rb;
 
-    [Header("Aiming with mouse position Y")]
-    [Range(0f, 100f)] float mouseSens = 100f;
-    public Transform playerBody;
+    [Header("Aiming with mouse position Y")] [Range(0f, 100f)]
+    float mouseSens = 100f;
+    public Transform Cam;
+
     public Weapon weapon;
     [Range(0f, 100f)] [SerializeField] private float XRotate = 0f;
-    
-    
-    
+
+
+
     // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         movementSpeed = 5;
-        _rb = GetComponent<Rigidbody2D>(); 
+        _rb = GetComponent<Rigidbody2D>();
         //Voorzorgt dat die niet omvalt bij een collider (alleen Rigidbody2D)
         _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
@@ -31,19 +32,11 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float mouseX = Input.GetAxis("Mouse X") * mouseSens * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSens * Time.deltaTime;
-        
         float horizontal = Input.GetAxis("Horizontal");
 
-        Vector2 move = new Vector2(horizontal,0);
-        transform.Translate(move * Time.deltaTime * movementSpeed, Space.Self);
+        Vector2 move = new Vector2(horizontal, 0);
+        transform.Translate(move * Time.deltaTime * movementSpeed);
 
-        XRotate -= mouseY;
-        XRotate = Mathf.Clamp(XRotate, -90f, 90f);
-        
-        playerBody.Rotate(Vector2.up * mouseX);
-        Camera.main.transform.localRotation = Quaternion.Euler(XRotate, 0f,0f );
         if (Input.GetButton("left shift"))
         {
             movementSpeed = 10f;
@@ -68,8 +61,7 @@ public class Player : MonoBehaviour
         }
     }
 
-
-    private void OnCollisionEnter2D(Collision2D collision)
+private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {

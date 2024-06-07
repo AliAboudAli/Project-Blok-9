@@ -1,61 +1,67 @@
 using UnityEngine;
+
 public class Weapon : MonoBehaviour
 {
     public Bullet bulletPrefab;
     public Transform firePoint;
+    public int currentAmmo;
+    [Header("Pistol properties")]
+    [Range(0, 100)] public int MaxAmmoPistol = 30;
+    [Range(0, 100)] public int MagazineSizePistol = 190;
+    [Header("Rifle properties")]
+    [Range(0, 100)] public int MaxAmmoRifle = 30;
+    [Range(0, 100)] public int MagazineSizeRifle = 190;
 
-    // Methode om te schieten
-    public virtual void Shoot(Vector3 direction)
+    private float lastFireTime = 0f;
+    private float fireRate = 0.05f;
+
+    public void Update()
     {
-        // Instantieer een kogel prefab op de vuurpositie van het wapen
-        Bullet bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        // Stel de richting van de kogel in
-        bullet.SetDirection(direction);
+        if (Input.GetButton("Fire1") && Time.time > lastFireTime + fireRate)
+        {
+            if (currentAmmo > 0)
+            {
+                Debug.Log("shoots");
+                Shoot();
+                lastFireTime = Time.time;
+            }
+            else
+            {
+                Debug.Log("Out of Ammo!");
+            }
+        }
     }
 
-    // Methode om het wapen te herladen
+    public void Shoot()
+    {
+        // Calculate the direction based on the rotation of the firePoint
+        Vector3 fireDirection = firePoint.forward;
+        print(fireDirection);
+    
+        // Instantiate a bullet prefab at the firePoint position and rotation
+        Bullet bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+    
+        // Set the direction of the bullet
+        bullet.SetDirection(fireDirection);
+    
+        // Decrease the current ammo
+        currentAmmo--;
+    }
+
+
+    // Method to reload the weapon
     public virtual void Reload()
     {
-        
-    }
-}
-
-// Afgeleide klasse voor een pistool
-public class Pistol : Weapon
-{
-    // Methode om te schieten, specifiek voor pistool
-    public override void Shoot(Vector3 direction)
-    {
-        // Specifieke logica voor het schieten met een pistool
-        Debug.Log("Schiet met pistool");
-        base.Shoot(direction); // Roep de basisklasse methode aan
-    }
-
-    // Methode om het pistool te herladen
-    public override void Reload()
-    {
-        // Specifieke logica voor het herladen van een pistool
-        Debug.Log("Herlaad pistool");
-        // Bijvoorbeeld, reset het aantal kogels in het pistoolmagazijn
-    }
-}
-
-// Afgeleide klasse voor een geweer
-public class Rifle : Weapon
-{
-    // Methode om te schieten, specifiek voor geweer
-    public override void Shoot(Vector3 direction)
-    {
-        // Specifieke logica voor het schieten met een geweer
-        Debug.Log("Schiet met geweer");
-        base.Shoot(direction); // Roep de basisklasse methode aan
-    }
-
-    // Methode om het geweer te herladen
-    public override void Reload()
-    {
-        // Specifieke logica voor het herladen van een geweer
-        Debug.Log("Herlaad geweer");
-        // Bijvoorbeeld, reset het aantal kogels in het geweermagazijn
+        int ammo = MaxAmmoPistol - currentAmmo;
+        if (MagazineSizePistol >= ammo)
+        {
+            currentAmmo += ammo;
+            MagazineSizePistol -= ammo;
+        }
+        else
+        {
+            currentAmmo += MagazineSizePistol;
+            MagazineSizePistol = 0;
+        }
     }
 }

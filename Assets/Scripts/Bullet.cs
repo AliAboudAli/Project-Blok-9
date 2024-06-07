@@ -5,23 +5,29 @@ public class Bullet : MonoBehaviour
 {
     public float speed;
     public float damage;
-    private Vector3 direction;
+    public Rigidbody2D rb;
 
+
+    public void Start()
+    {
+        
+        print(rb);
+        if (rb == null)
+        {
+            Debug.Log("we need a rigidbody");
+        }
+    }
     public void SetDirection(Vector3 direction)
     {
-        // de richting van de kogel (genormaliseerd)
-        this.direction = direction.normalized;
+        // Apply force in the specified direction
+        //rb = GetComponent<Rigidbody2D>();
+        print(direction);
+        print(rb);
+        rb.AddForce(direction.normalized * speed);
     }
-
-    // Start is called before the first frame update
-    private void Update()
-    {
-        // Richting doorgeven van de kogel berekenen
-        transform.Translate(direction * speed * Time.deltaTime);
-    }
-
-    // Methode die wordt aangeroepen wanneer de kogel een trigger collider raakt
-    private void OnTriggerEnter(Collider other)
+    
+    // Methode die wordt aangeroepen wanneer de kogel een collider raakt
+    private void OnTriggerEnter2D(Collider2D other)
     {
         // Controleer of de kogel een vijand raakt
         if (other.gameObject.CompareTag("Enemy"))
