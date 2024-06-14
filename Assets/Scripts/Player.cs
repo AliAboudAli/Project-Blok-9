@@ -16,13 +16,13 @@ public class Player : MonoBehaviour
 
     public Weapon weapon;
     [Range(0f, 100f)] [SerializeField] private float XRotate = 0f;
-
+    public Vector3 direction;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
+       Cursor.visible = false;
         movementSpeed = 5;
         _rb = GetComponent<Rigidbody2D>();
         //Voorzorgt dat die niet omvalt bij een collider (alleen Rigidbody2D)
@@ -46,7 +46,8 @@ public class Player : MonoBehaviour
             movementSpeed = 5f;
         }
 
-        if (Input.GetButton("Jump") && isGrounded && _rb.velocity.magnitude > 0)
+        //controleert de input van jump en moet kijken om de speler al grounded is of niet
+        if (Input.GetButton("Jump") && isGrounded)
         {
             if (isGrounded)
             {
@@ -61,7 +62,7 @@ public class Player : MonoBehaviour
         }
     }
 
-private void OnCollisionEnter2D(Collision2D collision)
+void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {

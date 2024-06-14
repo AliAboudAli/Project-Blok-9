@@ -1,49 +1,74 @@
 using UnityEngine;
+using System.Collections;
 
-// Klasse voor kogels
 public class Bullet : MonoBehaviour
 {
-    public float speed;
-    public float damage;
-    public Rigidbody2D rb;
+    public float speed = 20f;
+    public float damage = 10f;
+    public float lifetime = 5f; // Time after which the bullet destroys itself
 
+    private Rigidbody2D rb;
 
-    public void Start()
+    void Awake()
     {
-        
-        print(rb);
+        rb = GetComponent<Rigidbody2D>();
         if (rb == null)
         {
-            Debug.Log("we need a rigidbody");
+            Debug.LogError("Rigidbody2D component is missing!");
         }
     }
-    public void SetDirection(Vector3 direction)
+
+    void Start()
     {
-        // Apply force in the specified direction
-        //rb = GetComponent<Rigidbody2D>();
-        print(direction);
-        print(rb);
-        rb.AddForce(direction.normalized * speed);
+        // Start the coroutine to destroy the bullet after 'lifetime' seconds
+        StartCoroutine(DestroyAfterLifetime());
     }
-    
-    // Methode die wordt aangeroepen wanneer de kogel een collider raakt
+
+    public void SetDirection(Vector2 direction)
+    {
+        if (rb != null)
+        {
+            rb.velocity = direction.normalized * speed;
+        }
+        else
+        {
+            Debug.LogError("Rigidbody2D component is missing when trying to set direction!");
+        }
+    }
+
+    private IEnumerator DestroyAfterLifetime()
+    {
+        yield return new WaitForSeconds(lifetime);
+        Destroy(gameObject);
+    }
+
+    // Method that gets called when the bullet hits a collider
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Controleer of de kogel een vijand raakt
+        // Check if the bullet hits a player
+        HealthPlayer healthPlayer = other.GetComponent<HealthPlayer>();
+        if (healthPlayer != null)
+        {
+            healthPlayer.takeDamage(damage);
+            Destroy(gameObject);
+            return;
+        }
+
+        // Check if the bullet hits an enemy
         if (other.gameObject.CompareTag("Enemy"))
         {
-            // Pas aan de schade toe aan de vijand
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
             {
                 enemy.TakeDamage(damage);
             }
-            // Vernietig de kogel
             Destroy(gameObject);
+            return;
         }
-        else if (!other.gameObject.CompareTag("Player"))
+
+        // Destroy the bullet if it hits anything other than the player or enemy
+        if (!other.gameObject.CompareTag("Player"))
         {
-            // Vernietig de kogel als deze iets anders raakt dan de speler
             Destroy(gameObject);
         }
     }
