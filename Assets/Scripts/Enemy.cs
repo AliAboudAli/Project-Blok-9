@@ -8,7 +8,7 @@ public class Enemy : MonoBehaviour
     public float Walkspeed;
     public float health;
     public float maxHealth = 100;
-    
+    public GameObject[] enemies;
     [Header("Attack Stats")]
     [Range(0,100)] public int attackDamage;
     [Range(0,100)] public int attackRange;

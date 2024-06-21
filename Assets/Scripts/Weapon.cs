@@ -1,27 +1,41 @@
+using System;
 using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    protected enum AmmoType { Pistol, Rifle }
+    [SerializeField] protected AmmoType ammoType;
+
+    public Ammo ammo;
     public Bullet bulletPrefab;
     public Transform firePoint;
-    public int currentAmmo;
-    [Header("Pistol properties")]
-    [Range(0, 100)] public int MaxAmmoPistol = 30;
-    [Range(0, 100)] public int MagazineSizePistol = 190;
-    [Header("Rifle properties")]
-    [Range(0, 100)] public int MaxAmmoRifle = 30;
-    [Range(0, 100)] public int MagazineSizeRifle = 190;
-
+    
+    [Header("Gun properties")] 
+    public int currentBullets;
+    public int magSize = 14;
     private float lastFireTime = 0f;
     private float fireRate = 0.05f;
+
+    public void Start()
+    {
+        currentBullets = magSize;
+
+        if (ammo == null)
+        {
+            ammo = GetComponent<Ammo>();
+            if (ammo == null)
+            {
+                Debug.LogError("No Ammo component found on weapon.");
+            }
+        }
+    }
 
     public void Update()
     {
         if (Input.GetButton("Fire1") && Time.time > lastFireTime + fireRate)
         {
-            if (currentAmmo > 0)
+            if (currentBullets > 0)
             {
-                Debug.Log("shoots");
                 Shoot();
                 lastFireTime = Time.time;
             }
@@ -30,54 +44,65 @@ public class Weapon : MonoBehaviour
                 Debug.Log("Out of Ammo!");
             }
         }
-        // kijkt naar de muis pozietzi en onthoud waar die is
-            Vector3 mousePosition = Input.mousePosition;
-
-        // zorgt er voor dat de muis z posietzie en die van de camera het zelfde zijn
+        Vector3 mousePosition = Input.mousePosition;
         mousePosition.z = transform.position.z - Camera.main.transform.position.z;
-
-        // zet de muis positzie van het scherm om naar cordienaten van de wereld
         Vector3 worldMousePosition = Camera.main.ScreenToWorldPoint(mousePosition);
-
-        // Calculate the direction from the object to the mouse position
         Vector2 direction = worldMousePosition - transform.position;
-
-        // bekijkt de rotatie van de gun
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-        // hier gebeurt de rotatie door middle van de Euler
         transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
     }
 
-
     public void Shoot()
     {
-        // Calculate the direction based on the rotation of the firePoint
         Vector3 fireDirection = firePoint.right; // Assuming firePoint faces right in 2D
         print(fireDirection);
-    
-        // Instantiate a bullet prefab at the firePoint position and rotation
         Bullet bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-        // Set the direction of the bullet
         bullet.SetDirection(fireDirection);
-    
-        // Decrease the current ammo
-        currentAmmo--;
+        currentBullets--;
     }
 
-    // Method to reload the weapon
-    public virtual void Reload()
+    public void Reload()
     {
-        int ammo = MaxAmmoPistol - currentAmmo;
-        if (MagazineSizePistol >= ammo)
+        if (ammo == null)
         {
-            currentAmmo += ammo;
-            MagazineSizePistol -= ammo;
+            Debug.LogError("No Ammo component found.");
+            return;
         }
-        else
+
+        switch (ammoType)
         {
-            currentAmmo += MagazineSizePistol;
-            MagazineSizePistol = 0;
+            case AmmoType.Pistol:
+                if (ammo.pistolAmmo > 0)
+                {
+                    int bulletsNeeded = magSize - currentBullets;
+                    int bulletsToLoad = Mathf.Min(bulletsNeeded, ammo.pistolAmmo);
+                    currentBullets += bulletsToLoad;
+                    ammo.pistolAmmo -= bulletsToLoad;
+                }
+                break;
+            case AmmoType.Rifle:
+                if (ammo.rifleAmmo > 0)
+                {
+                    int bulletsNeeded = magSize - currentBullets;
+                    int bulletsToLoad = Mathf.Min(bulletsNeeded, ammo.rifleAmmo);
+                    currentBullets += bulletsToLoad;
+                    ammo.rifleAmmo -= bulletsToLoad;
+                }
+                break;
+        }
+
+        Debug.Log("Reloaded weapon. Current bullets: " + currentBullets);
+    }
+    
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            Player player = other.GetComponent<Player>();
+            if (player != null)
+            {
+                player.PickupWeapon(this);
+            }
         }
     }
 }

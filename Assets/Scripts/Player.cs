@@ -1,39 +1,46 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR;
-using Vector2 = UnityEngine.Vector2;
 
 public class Player : MonoBehaviour
 {
-    [Header("Movement")] [Range(0f, 100f)] public float movementSpeed;
+    public Weapon currentWeapon;
+    [Header("Movement")] 
+    [Range(0f, 100f)] public float movementSpeed = 5f;
     [Range(0f, 100f)] public float jumpForce = 1f;
     [Range(0f, 100f)] public float maxJump = 10f;
     public bool isGrounded;
     private Rigidbody2D _rb;
 
-    [Header("Aiming with mouse position Y")] [Range(0f, 100f)]
-    float mouseSens = 100f;
+    [Header("Aiming with mouse position Y")] 
+    [Range(0f, 100f)] float mouseSens = 100f;
+
     public Transform Cam;
 
-    public Weapon weapon;
     [Range(0f, 100f)] [SerializeField] private float XRotate = 0f;
     public Vector3 direction;
 
-
-    // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-       Cursor.visible = false;
-        movementSpeed = 5;
+        Cursor.visible = false;
         _rb = GetComponent<Rigidbody2D>();
-        //Voorzorgt dat die niet omvalt bij een collider (alleen Rigidbody2D)
+        // Voorzorgt dat die niet omvalt bij een collider (alleen Rigidbody2D)
         _rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        if (currentWeapon == null)
+        {
+            currentWeapon = GetComponentInChildren<Weapon>();
+        }
+
+        if (currentWeapon != null && currentWeapon.ammo == null)
+        {
+            currentWeapon.ammo = GetComponentInChildren<Ammo>();
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         float horizontal = Input.GetAxis("Horizontal");
-
         Vector2 move = new Vector2(horizontal, 0);
         transform.Translate(move * Time.deltaTime * movementSpeed);
 
@@ -46,23 +53,71 @@ public class Player : MonoBehaviour
             movementSpeed = 5f;
         }
 
-        //controleert de input van jump en moet kijken om de speler al grounded is of niet
+        // Check jump input and if the player is grounded
         if (Input.GetButton("Jump") && isGrounded)
         {
-            if (isGrounded)
-            {
-                _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-                isGrounded = false;
+            _rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            isGrounded = false;
 
-                if (_rb.velocity.y > maxJump)
-                {
-                    _rb.velocity = new Vector2(_rb.velocity.x, maxJump);
-                }
+            if (_rb.velocity.y > maxJump)
+            {
+                _rb.velocity = new Vector2(_rb.velocity.x, maxJump);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            currentWeapon?.Reload();
+        }
+    }
+
+    public void PickupAmmo(int pistolAmmo, int rifleAmmo)
+    {
+        if (currentWeapon != null && currentWeapon.ammo != null)
+        {
+            currentWeapon.ammo.pistolAmmo += pistolAmmo;
+            currentWeapon.ammo.rifleAmmo += rifleAmmo;
+        
+            currentWeapon.Reload(); // Reload the weapon after picking up ammo
+        }
+        else
+        {
+            Debug.LogError("No current weapon or ammo reference found.");
+        }
+    }
+
+    public void PickupWeapon(Weapon newWeapon)
+    {
+        if (currentWeapon != null)
+        {
+            Destroy(currentWeapon.gameObject);
+        }
+        currentWeapon = newWeapon;
+        currentWeapon.transform.SetParent(transform);
+        currentWeapon.transform.localPosition = Vector3.zero;
+
+        if (currentWeapon.ammo == null)
+        {
+            currentWeapon.ammo = currentWeapon.GetComponent<Ammo>();
+        }
+
+        Debug.Log("Picked up weapon: " + newWeapon.name);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("AmmoPickup"))
+        {
+            Ammo ammoPickup = other.GetComponent<Ammo>();
+            if (ammoPickup != null)
+            {
+                PickupAmmo(ammoPickup.pistolAmmo, ammoPickup.rifleAmmo);
+                Destroy(other.gameObject);
             }
         }
     }
 
-void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
