@@ -6,7 +6,6 @@ public class Bullet : MonoBehaviour
     public float speed = 20f;
     public float damage = 10f;
     public float lifetime = 5f; // Time after which the bullet destroys itself
-
     private Rigidbody2D rb;
 
     void Awake()
@@ -49,7 +48,8 @@ public class Bullet : MonoBehaviour
         HealthPlayer healthPlayer = other.GetComponent<HealthPlayer>();
         if (healthPlayer != null)
         {
-            healthPlayer.takeDamage(damage);
+            float randomDamage = Random.Range(7f, 15f);
+            healthPlayer.takeDamage(randomDamage);
             Destroy(gameObject);
             return;
         }
@@ -60,7 +60,7 @@ public class Bullet : MonoBehaviour
             Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.TakeDamage(damage);
+                // enemy.TakeDamage(damage);
             }
             Destroy(gameObject);
             return;
